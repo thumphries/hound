@@ -733,9 +733,6 @@ var ResultView = React.createClass({
       });
     });
   },
-  componentWillUnmount: function() {
-    console.log("Result view unmounting!")
-  },
   getInitialState: function() {
     return { results: null };
   },
@@ -748,12 +745,10 @@ var ResultView = React.createClass({
       );
     }
 
-    var status = <div id="traffic-light" className="traffic-light green"></div>;
     var repos;
 
     if (this.state.results === null && this.state.query) {
       // Waiting for initial results...
-      status = <div id="traffic-light" className="traffic-light yellow"></div>;
       repos = <div id="no-result">&ldquo;Waiting for results...&rdquo;</div>;
     }
 
@@ -782,10 +777,7 @@ var ResultView = React.createClass({
       );
     });
     return (
-      <div>
-        {status}
-        <div id="result">{repos}</div>
-      </div>
+      <div id="result">{repos}</div>
     );
   }
 });
