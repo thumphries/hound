@@ -722,24 +722,25 @@ var ResultView = React.createClass({
       );
     }
 
-    if (this.state.results !== null && this.state.results.length === 0) {
-      // TODO(knorton): We need something better here. :-(
-      return (
-        <div id="no-result">&ldquo;Nothing for you, Dawg.&rdquo;<div>0 results</div></div>
-      );
+    var status = <div id="traffic-light" className="traffic-light green"></div>;
+    var repos;
+
+    if (this.state.results === null && this.state.query) {
+      // Waiting for initial results...
+      status = <div id="traffic-light" className="traffic-light yellow"></div>;
+      repos = <div id="no-result">&ldquo;Waiting for results...&rdquo;</div>;
     }
 
-    /*
-    if (this.state.results === null && this.state.query) {
-      return (
-        <div id="no-result"><img src="images/busy.gif" /><div>Searching...</div></div>
-      );
+    if (this.state.results !== null && this.state.results.length === 0) {
+      // No results...
+      repos = <div id="no-result">&ldquo;Nothing.&rdquo;<div>0 results</div></div>;
     }
-    */
+
 
     var regexp = this.state.regexp,
         results = this.state.results || [];
-    var repos = results.map(function(result, index) {
+
+    repos = repos || results.map(function(result, index) {
       return (
         <div className="repo">
           <div className="title">
@@ -755,7 +756,10 @@ var ResultView = React.createClass({
       );
     });
     return (
-      <div id="result">{repos}</div>
+      <div>
+        {status}
+        <div id="result">{repos}</div>
+      </div>
     );
   }
 });

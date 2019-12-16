@@ -352,3 +352,21 @@ button:focus {
   margin-bottom: 40px;
 }
 
+.traffic-light {
+  height: 25px;
+  width: 25px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.traffic-light.yellow {
+  background-color: #e7b416;
+}
+
+.traffic-light.green {
+  background-color: #2dc937;
+}
+
+.traffic-light.red {
+  background-color: #cc3232;
+}
