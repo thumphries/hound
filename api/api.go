@@ -28,7 +28,9 @@ type Stats struct {
 func writeJson(w http.ResponseWriter, data interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(status)
+	if status != http.StatusOK {
+		w.WriteHeader(status)
+	}
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		log.Panicf("Failed to encode JSON: %v\n", err)
 	}
@@ -159,18 +161,32 @@ func parseRangeValue(rv string) (int, int) {
 	return b, e
 }
 
+type handler func(http.ResponseWriter, *http.Request)
+
+func Recoverable(h handler) handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			r := recover()
+			if r != nil {
+				// Failed, who cares
+			}
+		}()
+		h(w, r)
+	}
+}
+
 func Setup(m *http.ServeMux, idx map[string]*searcher.Searcher) {
 
-	m.HandleFunc("/api/v1/repos", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/api/v1/repos", Recoverable(func(w http.ResponseWriter, r *http.Request) {
 		res := map[string]*config.Repo{}
 		for name, srch := range idx {
 			res[name] = srch.Repo
 		}
 
 		writeResp(w, res)
-	})
+	}))
 
-	m.HandleFunc("/api/v1/search", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/api/v1/search", Recoverable(func(w http.ResponseWriter, r *http.Request) {
 		var opt index.SearchOptions
 
 		stats := parseAsBool(r.FormValue("stats"))
@@ -209,17 +225,17 @@ func Setup(m *http.ServeMux, idx map[string]*searcher.Searcher) {
 		}
 
 		writeResp(w, &res)
-	})
+	}))
 
-	m.HandleFunc("/api/v1/excludes", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/api/v1/excludes", Recoverable(func(w http.ResponseWriter, r *http.Request) {
 		repo := r.FormValue("repo")
 		res := idx[repo].GetExcludedFiles()
 		w.Header().Set("Content-Type", "application/json;charset=utf-8")
 		w.Header().Set("Access-Control-Allow", "*")
 		fmt.Fprint(w, res)
-	})
+	}))
 
-	m.HandleFunc("/api/v1/update", func(w http.ResponseWriter, r *http.Request) {
+	m.HandleFunc("/api/v1/update", Recoverable(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			writeError(w,
 				errors.New(http.StatusText(http.StatusMethodNotAllowed)),
@@ -248,5 +264,5 @@ func Setup(m *http.ServeMux, idx map[string]*searcher.Searcher) {
 		}
 
 		writeResp(w, "ok")
-	})
+	}))
 }

@@ -183,11 +183,23 @@ var Model = {
       return;
     }
 
-    $.ajax({
+    _this.activeSearchRequest = $.ajax({
       url: 'api/v1/search',
       data: params,
       type: 'GET',
       dataType: 'json',
+      beforeSend: function(xhr) {
+        if (typeof _this.activeSearchRequest == 'undefined') {
+          console.log('First search request');
+          _this.activeSearchRequest = null;
+        }
+
+        if (_this.activeSearchRequest !== null) {
+          console.log('Aborting in-flight request');
+          _this.activeSearchRequest.abort();
+          _this.activeSearchRequest = null;
+        }
+      },
       success: function(data) {
         if (data.Error) {
           _this.didError.raise(_this, data.Error);
@@ -227,11 +239,14 @@ var Model = {
           Total: Date.now() - startedAt,
           Files: stats.FilesOpened
         };
-
+        _this.activeSearchRequest = null;
         _this.didSearch.raise(_this, _this.results, _this.stats);
       },
       error: function(xhr, status, err) {
-        _this.didError.raise(this, "The server broke down");
+        _this.activeSearchRequest = null;
+        if (status !== 'abort') {
+          _this.didError.raise(this, "The server broke down");
+        }
       }
     });
   },
@@ -256,6 +271,9 @@ var Model = {
       data: params,
       type: 'GET',
       dataType: 'json',
+      beforeSend: function() {
+        console.log('beforesend');
+      },
       success: function(data) {
         if (data.Error) {
           _this.didError.raise(_this, data.Error);
@@ -310,6 +328,7 @@ var RepoOption = React.createClass({
 
 var SearchBar = React.createClass({
   componentWillMount: function() {
+    console.log('mounting new searchbar');
     var _this = this;
     Model.didLoadRepos.tap(function(model, repos) {
       _this.setState({ allRepos: Object.keys(repos) });
@@ -831,7 +850,7 @@ var App = React.createClass({
     });
 
     Model.didError.tap(function(model, error) {
-      _this.refs.searchBar({
+      _this.refs.searchBar.setState({
         qstate: 'FAILED'
       });
 
