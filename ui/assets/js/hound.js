@@ -156,6 +156,15 @@ var Model = {
   },
 
   Search: function(params) {
+    if (typeof this.lastSearch != 'undefined') {
+      this.lastSearch = null;
+    }
+    if (this.lastSearch === params) {
+      // short circuit
+      console.log('skipping duplicate search');
+      return
+    }
+
     this.willSearch.raise(this, params);
     var _this = this,
         startedAt = Date.now();
@@ -179,28 +188,28 @@ var Model = {
     if (params.q == '') {
       _this.results = [];
       _this.resultsByRepo = {};
-      _this.didSearch.raise(_this, _this.results);
+      _this.didSearch.raise(_this, params.q, _this.results);
       return;
     }
 
-    _this.activeSearchRequest = $.ajax({
+    if (typeof _this.searchRequestNumber == 'undefined') {
+      console.log('First search request');
+      _this.searchRequestNumber = 0;
+    }
+    var req = ++_this.searchRequestNumber;
+
+    $.ajax({
       url: 'api/v1/search',
       data: params,
       type: 'GET',
       dataType: 'json',
-      beforeSend: function(xhr) {
-        if (typeof _this.activeSearchRequest == 'undefined') {
-          console.log('First search request');
-          _this.activeSearchRequest = null;
+      success: function(data) {
+        if (_this.searchRequestNumber !== req) {
+          console.log('ignoring');
+          return;
         }
 
-        if (_this.activeSearchRequest !== null) {
-          console.log('Aborting in-flight request');
-          _this.activeSearchRequest.abort();
-          _this.activeSearchRequest = null;
-        }
-      },
-      success: function(data) {
+        console.log(data);
         if (data.Error) {
           _this.didError.raise(_this, data.Error);
           return;
@@ -240,13 +249,14 @@ var Model = {
           Files: stats.FilesOpened
         };
         _this.activeSearchRequest = null;
-        _this.didSearch.raise(_this, _this.results, _this.stats);
+        _this.didSearch.raise(_this, params.q, _this.results, _this.stats);
       },
       error: function(xhr, status, err) {
-        _this.activeSearchRequest = null;
-        if (status !== 'abort') {
-          _this.didError.raise(this, "The server broke down");
+        if (_this.searchRequestNumber !== req) {
+          console.log('ignoring');
+          return;
         }
+        _this.didError.raise(this, "The server broke down");
       }
     });
   },
@@ -827,7 +837,9 @@ var App = React.createClass({
       });
     });
 
-    Model.didSearch.tap(function(model, results, stats) {
+    Model.didSearch.tap(function(model, query, results, stats) {
+      _this.lastSearch = query;
+
       _this.refs.searchBar.setState({
         stats: stats,
         repos: repos,
