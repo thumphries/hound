@@ -351,7 +351,7 @@ var SearchBar = React.createClass({
       break;
     }
   },
-  queryGotKeypress: function(event) {
+  queryChanged: function(event) {
     this.submitQuery();
   },
   queryGotFocus: function(event) {
@@ -482,7 +482,7 @@ var SearchBar = React.createClass({
               ref="q"
               autocomplete="off"
               onKeyDown={this.queryGotKeydown}
-              onKeyPress={this.queryGotKeypress}
+              onChange={this.queryChanged}
               onFocus={this.queryGotFocus}/>
           <div className="button-add-on">
             <button id="dodat" onClick={this.submitQuery}></button>
@@ -705,7 +705,7 @@ var ResultView = React.createClass({
     var _this = this;
     Model.willSearch.tap(function(model, params) {
       _this.setState({
-        results: null,
+        results: _this.state.results || null,
         query: params.q
       });
     });
@@ -729,11 +729,13 @@ var ResultView = React.createClass({
       );
     }
 
+    /*
     if (this.state.results === null && this.state.query) {
       return (
         <div id="no-result"><img src="images/busy.gif" /><div>Searching...</div></div>
       );
     }
+    */
 
     var regexp = this.state.regexp,
         results = this.state.results || [];
