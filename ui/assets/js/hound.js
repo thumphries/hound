@@ -382,7 +382,12 @@ var SearchBar = React.createClass({
     }
   },
   queryChanged: function(event) {
-    this.submitQuery();
+    var _this = this;
+    clearTimeout(_this.inputTimeout || null);
+    _this.inputTimeout = setTimeout(function() {
+      console.log('timer fired!');
+      _this.submitQuery();
+    }, 5);
   },
   queryGotFocus: function(event) {
     if (!this.hasAdvancedValues()) {
@@ -533,7 +538,7 @@ var SearchBar = React.createClass({
               ref="q"
               autocomplete="off"
               onKeyDown={this.queryGotKeydown}
-              onChange={this.queryChanged}
+              onInput={this.queryChanged}
               onFocus={this.queryGotFocus}/>
           {statusOrb}
           <div className="button-add-on">
