@@ -179,7 +179,7 @@ var Model = {
     if (params.q == '') {
       _this.results = [];
       _this.resultsByRepo = {};
-      _this.didSearch.raise(_this, _this.Results);
+      _this.didSearch.raise(_this, _this.results);
       return;
     }
 
@@ -334,19 +334,20 @@ var SearchBar = React.createClass({
     return {
       state: null,
       allRepos: [],
-      repos: []
+      repos: [],
+      qstate: 'WAITING'
     };
   },
   queryGotKeydown: function(event) {
     switch (event.keyCode) {
-    case 40:
+    case 40: // down arrow
       // this will cause advanced to expand if it is not expanded.
       this.refs.files.getDOMNode().focus();
       break;
-    case 38:
+    case 38: // up arrow
       this.hideAdvanced();
       break;
-    case 13:
+    case 13: // return
       this.submitQuery();
       break;
     }
@@ -473,6 +474,27 @@ var SearchBar = React.createClass({
       );
     }
 
+    var statusOrb =
+      statusOrb =
+        <div className="status-cell">
+          <div className="traffic-light red"></div>
+          <div className="traffic-pulse red"></div>
+        </div>;
+
+    if (this.state.qstate === 'WAITING') {
+      statusOrb =
+        <div className="status-cell">
+          <div className="traffic-light yellow"></div>
+          <div className="traffic-pulse yellow"></div>
+        </div>;
+    } else if (this.state.qstate === 'READY') {
+      statusOrb =
+        <div className="status-cell">
+          <div className="traffic-light green"></div>
+          <div className="traffic-pulse green"></div>
+        </div>;
+    }
+
     return (
       <div id="input">
         <div id="ina">
@@ -484,6 +506,7 @@ var SearchBar = React.createClass({
               onKeyDown={this.queryGotKeydown}
               onChange={this.queryChanged}
               onFocus={this.queryGotFocus}/>
+          {statusOrb}
           <div className="button-add-on">
             <button id="dodat" onClick={this.submitQuery}></button>
           </div>
@@ -710,6 +733,9 @@ var ResultView = React.createClass({
       });
     });
   },
+  componentWillUnmount: function() {
+    console.log("Result view unmounting!")
+  },
   getInitialState: function() {
     return { results: null };
   },
@@ -784,10 +810,17 @@ var App = React.createClass({
       }
     });
 
+    Model.willSearch.tap(function(model, params) {
+      _this.refs.searchBar.setState({
+        qstate: 'WAITING'
+      });
+    });
+
     Model.didSearch.tap(function(model, results, stats) {
       _this.refs.searchBar.setState({
         stats: stats,
         repos: repos,
+        qstate: 'READY'
       });
 
       _this.refs.resultView.setState({
@@ -806,6 +839,10 @@ var App = React.createClass({
     });
 
     Model.didError.tap(function(model, error) {
+      _this.refs.searchBar({
+        qstate: 'FAILED'
+      });
+
       _this.refs.resultView.setState({
         results: null,
         error: error

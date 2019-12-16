@@ -74,12 +74,19 @@ button:focus {
   display: table-cell;
   width: 100%;
   vertical-align: middle;
+  text-indent: 50px;
 }
 
 #ina > .button-add-on {
   display: table-cell;
   vertical-align: middle;
   width: 1%;
+}
+
+#ina > .status-cell {
+  position: absolute;
+  left: 22px;
+  top: 20px;
 }
 
 /* Search submit button */
@@ -353,20 +360,57 @@ button:focus {
 }
 
 .traffic-light {
-  height: 25px;
-  width: 25px;
+  height: 16px;
+  width: 16px;
   border-radius: 50%;
-  display: inline-block;
+  -webkit-transition: background-color 0.5s ease;
+  -moz-transition: background-color 0.5s ease;
+  -o-transition: background-color 0.5s ease;
+  transition: background-color 0.5s ease;
+  position: absolute;
+  opacity: 0.5;
+}
+
+.traffic-pulse {
+  height: 22px;
+  width: 22px;
+  border-radius: 50%;
+  -webkit-border-radius: 50%;
+
+  -webkit-animation: pulsate 1s ease-out;
+  -webkit-animation-iteration-count: infinite;
+  opacity: 0.0
+  z-index: 9999;
+  margin-left: -5px;
+  margin-top: -6px;
+  position: absolute;
+}
+@-webkit-keyframes pulsate {
+  0% {-webkit-transform: scale(0.1, 0.1); opacity: 0.0;}
+  50% {opacity: 1.0;}
+  100% {-webkit-transform: scale(1.0, 1.0); opacity: 0.0;}
 }
 
 .traffic-light.yellow {
   background-color: #e7b416;
 }
 
+.traffic-pulse.yellow {
+  border: 3px solid #e7b416;
+}
+
 .traffic-light.green {
   background-color: #2dc937;
 }
 
+.traffic-pulse.green {
+  border: 3px solid #2dc937;
+}
+
 .traffic-light.red {
   background-color: #cc3232;
+}
+
+.traffic-pulse.red {
+  border: 3px solid #cc3232;
 }
