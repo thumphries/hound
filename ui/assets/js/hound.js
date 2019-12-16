@@ -351,6 +351,9 @@ var SearchBar = React.createClass({
       break;
     }
   },
+  queryGotKeypress: function(event) {
+    this.submitQuery();
+  },
   queryGotFocus: function(event) {
     if (!this.hasAdvancedValues()) {
       this.hideAdvanced();
@@ -479,6 +482,7 @@ var SearchBar = React.createClass({
               ref="q"
               autocomplete="off"
               onKeyDown={this.queryGotKeydown}
+              onKeyPress={this.queryGotKeypress}
               onFocus={this.queryGotFocus}/>
           <div className="button-add-on">
             <button id="dodat" onClick={this.submitQuery}></button>
